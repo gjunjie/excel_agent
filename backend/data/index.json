@@ -1,0 +1,80 @@
+{
+  "vip_products_clearance_2025.xlsx": [
+    "serial number",
+    "brand",
+    "Product name",
+    "Product introduction",
+    "Specification",
+    "Product packaging specifications",
+    "product unit",
+    "Box regulations",
+    "Ordering unit",
+    "cost price",
+    "clearance price",
+    "VIP large channel dropshipping price",
+    "First-level distribution price (drop shipping)",
+    "Secondary distribution price (drop shipping)",
+    "Platform selling price",
+    "Jingdong price",
+    "Shipping fee - remote areas (Xinjiang, Tibet, Hainan, Inner Mongolia)",
+    "Unnamed: 21"
+  ],
+  "public_budget_expenditure_growth.xlsx": [
+    "Table 4 Growth of general public budget expenditures per student at all levels of education_Unit: Yuan_Province (district, city, county)",
+    "kindergarten",
+    "Column_3",
+    "Ordinary primary school",
+    "Column_5",
+    "Ordinary junior high school",
+    "Column_7",
+    "Ordinary high school",
+    "Column_9",
+    "secondary vocational school",
+    "Column_11",
+    "Ordinary colleges and universities",
+    "Column_13"
+  ],
+  "cola.xlsx": [
+    "date",
+    "City",
+    "Product series",
+    "sales channels",
+    "Sales quantity",
+    "unit price",
+    "total sales",
+    "Discount",
+    "net sales",
+    "sales representative"
+  ],
+  "student_thesis_revision_summary.xlsx": [
+    "serial number_1_2",
+    "class_12China International Trade (1)_12China International Trade (1)",
+    "Student number_120107200125_120107200126",
+    "Name_Lu Rongrong_Lu Wenjie",
+    "tutor_Ru Yucong_Zhang Lifeng",
+    "Group_Group 6_Group 6",
+    "Proposal report title_Research on the linkage relationship between RMB offshore market and onshore market exchange rates_Current situation and improvement strategies for tea export competitiveness in Zhejiang Province",
+    "Revised opinions of the defense team_1.Data expansion_1. What factors affect competitiveness? 2. The summary is too messy and the content is not standardized. Write a current situation and then competitiveness and then countermeasures. There is a problem with expression. 3. The focus is not prominent enough. 4. Countermeasures must be specific.",
+    "Remark"
+  ],
+  "power_generation_log.xlsx": [
+    "Motor number",
+    "Power generation (kwh)",
+    "Power generation (kwh)",
+    "Hours of power generation",
+    "Motor uptime",
+    "prepared by_BB_Motor failure hours",
+    "Review_AAA_Effective hours of electricity",
+    "Non-motor failure hours",
+    "Column_9",
+    "Column_10",
+    "Column_11",
+    "date_2023.11.1_Motor availability %"
+  ],
+  "complex_header.xlsx": [
+    "product information_Product name",
+    "Product number",
+    "sales data_sales",
+    "quantity"
+  ]
+}
