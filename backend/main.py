@@ -38,6 +38,59 @@ async def health():
     return {"status": "ok"}
 
 
+@app.get("/list_files")
+async def list_files():
+    """
+    List all Excel files in the database with their metadata.
+    
+    Returns:
+        Dictionary with:
+          - "files": list of file objects, each containing:
+            - "file_name": name of the file
+            - "columns": list of column names
+            - "n_columns": number of columns
+            - "n_rows": number of rows (if available)
+    """
+    try:
+        # Load the index
+        try:
+            index = load_index(INDEX_PATH)
+        except FileNotFoundError:
+            # Build index if it doesn't exist
+            index = build_excel_index(DATA_DIR)
+            save_index(index, INDEX_PATH)
+        
+        # Get file metadata
+        files = []
+        for file_name, columns in index.items():
+            file_info = {
+                "file_name": file_name,
+                "columns": columns,
+                "n_columns": len(columns)
+            }
+            
+            # Try to get row count by loading the file
+            try:
+                file_path = os.path.join(DATA_DIR, file_name)
+                if os.path.exists(file_path):
+                    df = preprocess_excel(file_path)
+                    file_info["n_rows"] = len(df)
+                else:
+                    file_info["n_rows"] = None
+            except Exception as e:
+                # If we can't load the file, just skip row count
+                file_info["n_rows"] = None
+            
+            files.append(file_info)
+        
+        return {"files": files}
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"Error in /list_files endpoint: {e}\n{error_trace}")
+        return {"files": [], "error": str(e)}
+
+
 @app.post("/upload_excel")
 async def upload_excel(file: UploadFile = File(...)):
     """

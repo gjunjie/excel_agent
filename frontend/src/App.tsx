@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import CodeBlock from './components/CodeBlock';
 import ResultTable from './components/ResultTable';
 import UsedColumns from './components/UsedColumns';
@@ -21,6 +21,18 @@ interface UploadResponse {
   n_rows: number;
 }
 
+interface FileInfo {
+  file_name: string;
+  columns: string[];
+  n_columns: number;
+  n_rows: number | null;
+}
+
+interface FilesListResponse {
+  files: FileInfo[];
+  error?: string;
+}
+
 function App() {
   const [question, setQuestion] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,7 +42,36 @@ function App() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState<UploadResponse | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [filesList, setFilesList] = useState<FileInfo[]>([]);
+  const [loadingFiles, setLoadingFiles] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch list of files on component mount and after upload
+  const fetchFilesList = async () => {
+    setLoadingFiles(true);
+    try {
+      const response = await fetch('http://localhost:8000/list_files');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const result: FilesListResponse = await response.json();
+      if (result.error) {
+        console.error('Error fetching files:', result.error);
+        setFilesList([]);
+      } else {
+        setFilesList(result.files);
+      }
+    } catch (err) {
+      console.error('Failed to fetch files list:', err);
+      setFilesList([]);
+    } finally {
+      setLoadingFiles(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFilesList();
+  }, []);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -86,6 +127,8 @@ function App() {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+      // Refresh files list after successful upload
+      await fetchFilesList();
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Failed to upload file');
     } finally {
@@ -143,159 +186,255 @@ function App() {
 
   return (
     <div className="app">
-      <div className="top-section">
+      {/* Header Section */}
+      <header className="app-header">
         <h1>Excel AI Agent</h1>
-        
-        {/* File Upload Section */}
-        <div className="upload-section">
-          <h2>Upload Excel File</h2>
-          <div className="upload-group">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".xlsx,.xls"
-              onChange={handleFileSelect}
-              className="file-input"
-              id="file-upload"
-              disabled={uploading}
-            />
-            <label htmlFor="file-upload" className="file-label">
-              {selectedFile ? (
-                <>
-                  <span>✓</span>
-                  <span style={{ fontWeight: 600, color: 'var(--success)' }}>
-                    {selectedFile.name}
-                  </span>
-                </>
-              ) : (
-                'Choose Excel file...'
-              )}
-            </label>
-            <button
-              className="upload-button"
-              onClick={handleUpload}
-              disabled={uploading || !selectedFile}
-            >
-              {uploading ? (
-                <>
-                  <span className="loading-spinner"></span>
-                  Uploading...
-                </>
-              ) : (
-                'Upload'
-              )}
-            </button>
-          </div>
-          {uploadError && <div className="error-message">{uploadError}</div>}
-          {uploadSuccess && (
-            <div className="success-message">
-              <strong>File uploaded successfully!</strong>
-              <div className="upload-info">
-                <div>File: {uploadSuccess.file_name}</div>
-                <div>Rows: {uploadSuccess.n_rows.toLocaleString()}</div>
-                <div>Columns: {uploadSuccess.columns.length}</div>
-              </div>
-            </div>
-          )}
-        </div>
+        <p className="app-subtitle">Intelligent Data Analysis & Insights</p>
+      </header>
 
-        {/* Analysis Section */}
-        <div className="analysis-section">
-          <h2>Analyze Data</h2>
-          
-          {/* Speech Recording Section */}
-          <div className="speech-section">
-            <h3>🎤 Voice Input</h3>
-            <SpeechRecorder onAnalysisResult={handleSpeechAnalysisResult} />
-          </div>
-
-          <div className="divider">
-            <span>or</span>
-          </div>
-
-          {/* Text Input Section */}
-          <div className="text-input-section">
-            <h3>✍️ Text Input</h3>
-            <div className="input-group">
-              <textarea
-                className="question-input"
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                placeholder="Enter your question about the Excel data..."
-                rows={3}
-                disabled={loading}
+      {/* Main Content Area */}
+      <div className="app-content">
+        {/* Left Sidebar - File Upload & Status */}
+        <aside className="sidebar">
+          <div className="sidebar-section">
+            <h2 className="sidebar-title">
+              <span>📊</span>
+              File Management
+            </h2>
+            <div className="upload-container">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleFileSelect}
+                className="file-input"
+                id="file-upload"
+                disabled={uploading}
               />
-              <button
-                className="analyze-button"
-                onClick={handleAnalyze}
-                disabled={loading}
-              >
-                {loading ? (
+              <label htmlFor="file-upload" className="file-label">
+                {selectedFile ? (
                   <>
-                    <span className="loading-spinner"></span>
-                    Analyzing...
+                    <span>✓</span>
+                    <span className="file-name">{selectedFile.name}</span>
                   </>
                 ) : (
-                  'Analyze'
+                  <>
+                    <span>📁</span>
+                    <span>Choose Excel file...</span>
+                  </>
+                )}
+              </label>
+              <button
+                className="upload-button"
+                onClick={handleUpload}
+                disabled={uploading || !selectedFile}
+              >
+                {uploading ? (
+                  <>
+                    <span className="loading-spinner"></span>
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <span>⬆️</span>
+                    Upload
+                  </>
                 )}
               </button>
             </div>
-            {error && <div className="error-message">{error}</div>}
-          </div>
-        </div>
-      </div>
-
-      {data && (
-        <div className="main-section">
-          <div className="left-column">
-            <div className="card">
-              <h2>
-                <span>💡</span>
-                Parsed Intent
-              </h2>
-              <pre className="json-display">
-                {JSON.stringify(data.intent, null, 2)}
-              </pre>
-            </div>
-            <div className="card">
-              <h2>
-                <span>🐍</span>
-                Generated Python Code
-              </h2>
-              <CodeBlock code={data.code} />
-            </div>
-          </div>
-          <div className="right-column">
-            <div className="card">
-              <h2>
-                <span>📈</span>
-                Analysis Result
-              </h2>
-              {data.error ? (
-                <div className="error-message">{data.error}</div>
-              ) : (
-                <ResultTable
-                  result={data.result_preview}
-                  columns={data.columns}
-                />
-              )}
-              {data.stdout && (
-                <div className="stdout">
-                  <strong>Output:</strong>
-                  <pre>{data.stdout}</pre>
+            {uploadError && <div className="error-message">{uploadError}</div>}
+            {uploadSuccess && (
+              <div className="success-message">
+                <strong>✓ File uploaded successfully!</strong>
+                <div className="upload-info">
+                  <div className="info-item">
+                    <span className="info-label">File:</span>
+                    <span className="info-value">{uploadSuccess.file_name}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Rows:</span>
+                    <span className="info-value">{uploadSuccess.n_rows.toLocaleString()}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Columns:</span>
+                    <span className="info-value">{uploadSuccess.columns.length}</span>
+                  </div>
                 </div>
-              )}
-            </div>
-            <div className="card">
-              <h2>
-                <span>📋</span>
-                Used Columns
-              </h2>
-              <UsedColumns columns={data.used_columns} />
+              </div>
+            )}
+          </div>
+
+          {/* Files List Section */}
+          <div className="sidebar-section">
+            <h2 className="sidebar-title">
+              <span>📁</span>
+              Files in Database
+            </h2>
+            {loadingFiles ? (
+              <div className="files-loading">
+                <span className="loading-spinner"></span>
+                Loading files...
+              </div>
+            ) : filesList.length === 0 ? (
+              <div className="empty-files-state">
+                No files uploaded yet. Upload an Excel file to get started.
+              </div>
+            ) : (
+              <div className="files-list">
+                {filesList.map((file, index) => (
+                  <div key={index} className="file-item">
+                    <div className="file-item-header">
+                      <span className="file-icon">📊</span>
+                      <span className="file-item-name" title={file.file_name}>
+                        {file.file_name}
+                      </span>
+                    </div>
+                    <div className="file-item-details">
+                      <div className="file-detail">
+                        <span className="file-detail-label">Columns:</span>
+                        <span className="file-detail-value">{file.n_columns}</span>
+                      </div>
+                      {file.n_rows !== null && (
+                        <div className="file-detail">
+                          <span className="file-detail-label">Rows:</span>
+                          <span className="file-detail-value">{file.n_rows.toLocaleString()}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </aside>
+
+        {/* Center Panel - Input Section */}
+        <main className="main-panel">
+          <div className="input-panel">
+            <h2 className="panel-title">
+              <span>🔍</span>
+              Ask Your Question
+            </h2>
+            
+            {/* Input Sections Side by Side */}
+            <div className="input-sections-grid">
+              {/* Speech Input */}
+              <div className="input-section">
+                <h3 className="input-section-title">
+                  <span>🎤</span>
+                  Voice Input
+                </h3>
+                <SpeechRecorder onAnalysisResult={handleSpeechAnalysisResult} />
+              </div>
+              
+              {/* Text Input */}
+              <div className="input-section">
+                <h3 className="input-section-title">
+                  <span>✍️</span>
+                  Text Input
+                </h3>
+                <div className="text-input-wrapper">
+                  <textarea
+                    className="question-input"
+                    value={question}
+                    onChange={(e) => setQuestion(e.target.value)}
+                    placeholder="Enter your question about the Excel data..."
+                    rows={4}
+                    disabled={loading}
+                  />
+                  <button
+                    className="analyze-button"
+                    onClick={handleAnalyze}
+                    disabled={loading || !question.trim()}
+                  >
+                    {loading ? (
+                      <>
+                        <span className="loading-spinner"></span>
+                        Analyzing...
+                      </>
+                    ) : (
+                      <>
+                        <span>🚀</span>
+                        Analyze
+                      </>
+                    )}
+                  </button>
+                </div>
+                {error && <div className="error-message">{error}</div>}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+
+          {/* Results Section */}
+          {data && (
+            <div className="results-panel">
+              <h2 className="panel-title">
+                <span>📊</span>
+                Analysis Results
+              </h2>
+              
+              <div className="results-grid">
+                {/* Top Row - Intent & Columns */}
+                <div className="result-card intent-card">
+                  <h3 className="card-header">
+                    <span>💡</span>
+                    Parsed Intent
+                  </h3>
+                  <div className="card-content">
+                    <pre className="json-display">
+                      {JSON.stringify(data.intent, null, 2)}
+                    </pre>
+                  </div>
+                </div>
+
+                <div className="result-card columns-card">
+                  <h3 className="card-header">
+                    <span>📋</span>
+                    Used Columns
+                  </h3>
+                  <div className="card-content">
+                    <UsedColumns columns={data.used_columns} />
+                  </div>
+                </div>
+
+                {/* Bottom Row - Code & Results */}
+                <div className="result-card code-card">
+                  <h3 className="card-header">
+                    <span>🐍</span>
+                    Generated Python Code
+                  </h3>
+                  <div className="card-content">
+                    <CodeBlock code={data.code} />
+                  </div>
+                </div>
+
+                <div className="result-card result-card-large">
+                  <h3 className="card-header">
+                    <span>📈</span>
+                    Analysis Result
+                  </h3>
+                  <div className="card-content">
+                    {data.error ? (
+                      <div className="error-message">{data.error}</div>
+                    ) : (
+                      <ResultTable
+                        result={data.result_preview}
+                        columns={data.columns}
+                      />
+                    )}
+                    {data.stdout && (
+                      <div className="stdout">
+                        <strong>Output:</strong>
+                        <pre>{data.stdout}</pre>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 }
